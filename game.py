@@ -9,7 +9,7 @@ def main(argv):
     if len(argv) > 0:
         how_many = int(argv[0])
         choice = argv[1] if len(argv) > 1 else 1
-        change = argv[2] if len(argv) > 2 else True
+        change = int(argv[2]) if len(argv) > 2 else True
 
         for i in range(how_many):
             door_game.fast_game(choice, change)
@@ -17,6 +17,7 @@ def main(argv):
         # show results
         door_game.show_final_results()
     else:
+        # start regular game
         door_game.start_game()
 
 
