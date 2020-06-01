@@ -1,10 +1,23 @@
-from random import shuffle
 import sys
+from random import shuffle
 
 
-def main():
+def main(argv):
     door_game = DoorGame()
-    door_game.start_game()
+
+    # play n fast games
+    if len(argv) > 0:
+        how_many = int(argv[0])
+        choice = argv[1] if len(argv) > 1 else 1
+        change = argv[2] if len(argv) > 2 else True
+
+        for i in range(how_many):
+            door_game.fast_game(choice, change)
+
+        # show results
+        door_game.show_final_results()
+    else:
+        door_game.start_game()
 
 
 class DoorGame:
@@ -15,6 +28,22 @@ class DoorGame:
         self.doors = {}
 
     def start_game(self):
+        self.init_doors()
+
+        try:
+            self.give_door_choice()
+
+            self.remove_losing_door()
+
+            self.give_change_choice()
+
+            self.show_results()
+        except ValueError as e:
+            print(e)
+
+        self.play_again()
+
+    def init_doors(self):
         random_door = [1, 0, 0]
         shuffle(random_door)
         self.doors = {
@@ -22,30 +51,18 @@ class DoorGame:
             '2': random_door[1],
             '3': random_door[2]
         }
-        
-        self.give_door_choice()
-        
-        self.remove_losing_door()
-
-        self.give_change_choice()
-
-        self.show_results()
-
-        self.play_again()
 
     def give_door_choice(self):
         self.choice = input('Please choose a door[1, 2, 3]: ')
 
         if self.choice not in self.doors:
-            print(f' --- Door number {self.choice} does not exist.')
-            sys.exit()
+            raise ValueError(f' --- Door number {self.choice} does not exist.')
 
         print(' --- You chose door number', self.choice)
 
     def remove_losing_door(self, remove='1'):
         # make sure not to remove selected door and not the price door
         if self.choice != remove and self.doors[remove] == 0:
-            print(' --- Removing a losing door.')
             del self.doors[remove]
         else:
             # otherwise try the next door
@@ -54,20 +71,22 @@ class DoorGame:
             self.remove_losing_door(str(remove))
             return
 
-        print(' --- Removed door number', remove)
+        print(' --- Removed losing door number', remove, end='')
 
     def give_change_choice(self):
-        change = input('Would you like to choose a different door? [Y/n]: ').strip() or 'y'
+        change = input('\nWould you like to choose a different door? [Y/n]: ').strip() or 'y'
 
         while change.lower() not in ['y', 'n']:
             change = input(' --- Incorrect input. Try again...[Y/n]: ').strip() or 'y'
 
         if change.lower() == 'y':
             print(' --- You chose a different door.')
+
+            # remove first choice
             del self.doors[self.choice]
             self.choice = None
 
-    def show_results(self):
+    def get_results(self):
         # if selection wasn't changed
         if self.choice:
             value = self.doors[self.choice]
@@ -76,12 +95,23 @@ class DoorGame:
             key, value = self.doors.popitem()
 
         if value == 1:
-            print(' --- You won! :)')
             self.games_won += 1
+
+        return value
+
+    def show_results(self):
+        value = self.get_results()
+
+        if value == 1:
+            print(' --- You won! :)')
         else:
-            print(' --- You lost! :(')
+            print(' --- You lost :(')
 
         self.games_played += 1
+
+        self.show_final_results()
+
+    def show_final_results(self):
         print(f' --- Games played: {self.games_played}. Games won: {self.games_won}')
 
     def play_again(self):
@@ -92,6 +122,23 @@ class DoorGame:
         else:
             print(' --- Bye!')
 
+    def fast_game(self, choice, change=True):
+        self.init_doors()
+
+        self.choice = str(choice)
+
+        self.remove_losing_door()
+
+        if change:
+            del self.doors[self.choice]
+            self.choice = None
+
+        value = self.get_results()
+
+        print(' WON!' if value else '')
+
+        self.games_played += 1
+
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
